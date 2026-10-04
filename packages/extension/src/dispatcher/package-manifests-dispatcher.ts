@@ -17,22 +17,26 @@
  ***********************************************************************/
 
 import { inject, injectable } from 'inversify';
-import { StateCatalogSourcesData } from '/@/state/catalog-sources.svelte';
-import { StatePackageManifestsData } from '/@/state/package-manifests.svelte';
+import type { DispatcherObject } from './util/dispatcher-object';
+import { AbsDispatcherObjectImpl } from './util/dispatcher-object';
+import { RpcExtension } from '@kubernetes-olm/rpc';
+import { DashboardStatesManager } from '/@/manager/dashboard-states-manager';
+import type { PackageManifestsData } from '@kubernetes-olm/channels';
+import { PACKAGE_MANIFESTS } from '@kubernetes-olm/channels';
 
 @injectable()
-export class States {
-  @inject(StateCatalogSourcesData)
-  private _stateCatalogSourcesData: StateCatalogSourcesData;
-
-  get stateCatalogSourcesData(): StateCatalogSourcesData {
-    return this._stateCatalogSourcesData;
+export class PackageManifestsDispatcher
+  extends AbsDispatcherObjectImpl<void, PackageManifestsData>
+  implements DispatcherObject<void>
+{
+  constructor(
+    @inject(RpcExtension) rpcExtension: RpcExtension,
+    @inject(DashboardStatesManager) private dashboardStatesManager: DashboardStatesManager,
+  ) {
+    super(rpcExtension, PACKAGE_MANIFESTS);
   }
 
-  @inject(StatePackageManifestsData)
-  private _statePackageManifestsData: StatePackageManifestsData;
-
-  get statePackageManifestsData(): StatePackageManifestsData {
-    return this._statePackageManifestsData;
+  getData(): PackageManifestsData {
+    return this.dashboardStatesManager.getPackageManifests();
   }
 }

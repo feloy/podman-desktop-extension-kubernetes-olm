@@ -22,6 +22,7 @@ import { States } from './states';
 import { StateObject } from './util/state-object.svelte';
 import { IDisposable } from '@kubernetes-olm/channels';
 import { StateCatalogSourcesData } from '/@/state/catalog-sources.svelte';
+import { StatePackageManifestsData } from '/@/state/package-manifests.svelte';
 
 const statesModule = new ContainerModule(options => {
   options.bind(States).toSelf().inSingletonScope();
@@ -29,6 +30,10 @@ const statesModule = new ContainerModule(options => {
   options.bind(StateCatalogSourcesData).toSelf().inSingletonScope();
   options.bind(StateObject).toService(StateCatalogSourcesData);
   options.bind(IDisposable).toService(StateCatalogSourcesData);
+
+  options.bind(StatePackageManifestsData).toSelf().inSingletonScope();
+  options.bind(StateObject).toService(StatePackageManifestsData);
+  options.bind(IDisposable).toService(StatePackageManifestsData);
 });
 
 export { statesModule };

@@ -25,7 +25,7 @@ import type { RpcExtension } from '@kubernetes-olm/rpc';
 import type { ExtensionContext, TelemetryLogger } from '@podman-desktop/api';
 import type { Container } from 'inversify';
 import { InversifyBinding } from '/@/inject/inversify-binding.js';
-import { CATALOG_SOURCES } from '@kubernetes-olm/channels';
+import { CATALOG_SOURCES, PACKAGE_MANIFESTS } from '@kubernetes-olm/channels';
 import { Dispatcher } from '/@/manager/dispatcher.js';
 import { ChannelSubscriber } from '/@/manager/channel-subscriber.js';
 import { DispatcherObject } from '/@/dispatcher/util/dispatcher-object.js';
@@ -33,6 +33,7 @@ import { DispatcherObject } from '/@/dispatcher/util/dispatcher-object.js';
 let container: Container;
 const dashboardStatesManagerMock: DashboardStatesManager = {
   onCatalogSourcesChange: vi.fn(),
+  onPackageManifestsChange: vi.fn(),
 } as unknown as DashboardStatesManager;
 const rpcExtension: RpcExtension = {
   fire: vi.fn(),
@@ -81,6 +82,15 @@ test('Dispatcher should dispatch catalog sources when onCatalogSourcesChange eve
     expect(dispatcherSpy).toHaveBeenCalledTimes(1);
   });
   expect(dispatcherSpy).toHaveBeenCalledWith(CATALOG_SOURCES);
+});
+
+test('Dispatcher should dispatch package manifests when onPackageManifestsChange event is fired', async () => {
+  const dispatcherSpy = vi.spyOn(dispatcher, 'dispatch').mockResolvedValue();
+  vi.mocked(dashboardStatesManagerMock.onPackageManifestsChange).mockImplementation(f => f() as IDisposable);
+  dispatcher.init();
+  await vi.waitFor(() => {
+    expect(dispatcherSpy).toHaveBeenCalledWith(PACKAGE_MANIFESTS);
+  });
 });
 
 test('dispatchByChannelName is called when onSubscribe emits an event', async () => {

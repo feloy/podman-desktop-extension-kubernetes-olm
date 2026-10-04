@@ -6,6 +6,7 @@ import Route from '/@/Route.svelte';
 import Navigation from '/@/Navigation.svelte';
 import type { RouterState } from '/@/models/router-state';
 import CatalogSourcesList from '/@/component/catalog-sources/CatalogSourcesList.svelte';
+import PackageManifestsList from '/@/component/package-manifests/PackageManifestsList.svelte';
 
 const DEFAULT_URL = '/catalogsources';
 
@@ -37,6 +38,10 @@ onMount(() => {
 
         <Route path="/catalogsources">
           <CatalogSourcesList />
+        </Route>
+
+        <Route path="/packagemanifests">
+          <PackageManifestsList />
         </Route>
       </div>
     </div>

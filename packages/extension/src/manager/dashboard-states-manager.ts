@@ -24,11 +24,20 @@ import type {
 import { inject, injectable } from 'inversify';
 import { Emitter, Event } from '/@/types/emitter';
 import { DashboardApiManager } from '/@/manager/dashboard-api-manager';
-import type { CatalogSourcesData } from '@kubernetes-olm/channels';
-import { toCatalogSourceInfo } from '/@/manager/resource-transformers';
+import type { CatalogSourcesData, PackageManifestsData } from '@kubernetes-olm/channels';
+import { PACKAGE_MANIFESTS } from '@kubernetes-olm/channels';
+import { toCatalogSourceInfo, toPackageManifestInfo } from '/@/manager/resource-transformers';
+import { ChannelSubscriber } from '/@/manager/channel-subscriber';
 
 /** The name under which the Dashboard extension watches CatalogSources, as `<plural>.<group>`. */
 export const CATALOG_SOURCES_RESOURCE = 'catalogsources.operators.coreos.com';
+
+/**
+ * The name under which the Dashboard extension lists PackageManifests. They are served by the OLM packageserver,
+ * which does not support watching them: the Dashboard lists them once when subscribed, so they are subscribed
+ * only while displayed, to be listed again when displayed again.
+ */
+export const PACKAGE_MANIFESTS_RESOURCE = 'packagemanifests.packages.operators.coreos.com';
 
 export const CONFIGURATION_SECTION = 'kubernetes-olm';
 export const CATALOG_NAMESPACE_KEY = 'catalog-namespace';
@@ -38,6 +47,9 @@ export const DEFAULT_CATALOG_NAMESPACE = 'olm';
 export class DashboardStatesManager implements Disposable {
   #onCatalogSourcesChange = new Emitter<void>();
   onCatalogSourcesChange: Event<void> = this.#onCatalogSourcesChange.event;
+
+  #onPackageManifestsChange = new Emitter<void>();
+  onPackageManifestsChange: Event<void> = this.#onPackageManifestsChange.event;
 
   #onContextsHealthChange = new Emitter<ContextsHealthsInfo>();
   onContextsHealthChange: Event<ContextsHealthsInfo> = this.#onContextsHealthChange.event;
@@ -49,9 +61,17 @@ export class DashboardStatesManager implements Disposable {
   #subscriber: KubernetesDashboardSubscriber | undefined;
 
   #catalogSources: CatalogSourcesData = { catalogSources: [] };
+  #packageManifests: PackageManifestsData = { packageManifests: [] };
+
+  // the package manifests are subscribed to only while the webview subscribes to them
+  #packageManifestsWanted = false;
+  #packageManifestsSubscription: Disposable | undefined;
 
   @inject(DashboardApiManager)
   protected dashboardApiManager: DashboardApiManager;
+
+  @inject(ChannelSubscriber)
+  protected channelSubscriber: ChannelSubscriber;
 
   init(): void {
     const didChangeSubscription = extensions.onDidChange(() => {
@@ -69,6 +89,14 @@ export class DashboardStatesManager implements Disposable {
     // current context at subscription time. Recreate those subscriptions after a kubeconfig
     // update so they follow a context switch instead of remaining attached to the old context.
     this.#subscriptions.push(kubernetes.onDidUpdateKubeconfig(() => this.#invalidateResources()));
+
+    const updatePackageManifestsWanted = (channelName: string): void => {
+      if (channelName === PACKAGE_MANIFESTS.name) {
+        this.#setPackageManifestsWanted(this.channelSubscriber.hasSubscribers(channelName));
+      }
+    };
+    this.#subscriptions.push(this.channelSubscriber.onSubscribe(updatePackageManifestsWanted));
+    this.#subscriptions.push(this.channelSubscriber.onUnsubscribe(updatePackageManifestsWanted));
 
     // The catalog sources are watched in a single namespace, follow its changes in the settings.
     this.#subscriptions.push(
@@ -127,11 +155,13 @@ export class DashboardStatesManager implements Disposable {
     }
     this.#resourceSubscriptions = [];
     this.#resourcesSubscribed = false;
+    this.#unsubscribeFromPackageManifests();
 
     // Do not display the previous context while the dashboard establishes informers for the
     // newly selected one. The health event emitted after a context switch recreates the
     // subscriptions once the dashboard has selected the new current context.
     this.setCatalogSources({ catalogSources: [] });
+    this.setPackageManifests({ packageManifests: [] });
 
     // A kubeconfig edit which leaves the current context unchanged does not necessarily emit a
     // health event. Recreate in that case too, after the dashboard has processed the change.
@@ -162,6 +192,46 @@ export class DashboardStatesManager implements Disposable {
         });
       }),
     );
+    if (this.#packageManifestsWanted) {
+      this.#subscribeToPackageManifests();
+    }
+  }
+
+  #setPackageManifestsWanted(wanted: boolean): void {
+    if (wanted === this.#packageManifestsWanted) {
+      return;
+    }
+    this.#packageManifestsWanted = wanted;
+    if (!wanted) {
+      this.#unsubscribeFromPackageManifests();
+      this.setPackageManifests({ packageManifests: [] });
+    } else if (this.#resourcesSubscribed) {
+      this.#subscribeToPackageManifests();
+    }
+  }
+
+  #subscribeToPackageManifests(): void {
+    if (this.#packageManifestsSubscription || !this.#subscriber) {
+      return;
+    }
+    const namespace = this.getCatalogNamespace();
+    this.#packageManifestsSubscription = this.#subscriber.onResourceUpdate(
+      { resourceName: PACKAGE_MANIFESTS_RESOURCE, namespace },
+      event => {
+        this.setPackageManifests({
+          packageManifests: event.resources.flatMap(r =>
+            r.resourceName === PACKAGE_MANIFESTS_RESOURCE && r.namespace === namespace
+              ? r.items.map(item => toPackageManifestInfo(item))
+              : [],
+          ),
+        });
+      },
+    );
+  }
+
+  #unsubscribeFromPackageManifests(): void {
+    this.#packageManifestsSubscription?.dispose();
+    this.#packageManifestsSubscription = undefined;
   }
 
   dispose(): void {
@@ -171,6 +241,7 @@ export class DashboardStatesManager implements Disposable {
       subscription.dispose();
     }
     this.#resourceSubscriptions = [];
+    this.#unsubscribeFromPackageManifests();
     for (const subscription of this.#subscriptions) {
       subscription.dispose();
     }
@@ -188,5 +259,14 @@ export class DashboardStatesManager implements Disposable {
   setCatalogSources(catalogSources: CatalogSourcesData): void {
     this.#catalogSources = catalogSources;
     this.#onCatalogSourcesChange.fire();
+  }
+
+  getPackageManifests(): PackageManifestsData {
+    return this.#packageManifests;
+  }
+
+  setPackageManifests(packageManifests: PackageManifestsData): void {
+    this.#packageManifests = packageManifests;
+    this.#onPackageManifestsChange.fire();
   }
 }

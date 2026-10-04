@@ -31,8 +31,17 @@ export class ChannelSubscriber {
 
   onSubscribe: Event<string> = this.#onSubscribe.event;
 
+  // fired when subscribers are removed from a channel
+  #onUnsubscribe = new Emitter<string>();
+
+  onUnsubscribe: Event<string> = this.#onUnsubscribe.event;
+
   async resetChannelSubscribers(channelName: string): Promise<void> {
+    const hadSubscribers = this.hasSubscribers(channelName);
     this.#subscribers[channelName] = [];
+    if (hadSubscribers) {
+      this.#onUnsubscribe.fire(channelName);
+    }
   }
 
   async subscribeToChannel<T>(channelName: string, options: T, subscription: number): Promise<void> {
@@ -50,6 +59,7 @@ export class ChannelSubscriber {
     this.#subscribers[channelName] = (this.#subscribers[channelName] ?? []).filter(
       subscriber => subscriber.uid !== subscription,
     );
+    this.#onUnsubscribe.fire(channelName);
   }
 
   hasSubscribers(channelName: string): boolean {

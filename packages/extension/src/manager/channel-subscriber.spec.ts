@@ -147,3 +147,32 @@ test('getSubscriptions returns unique values', async () => {
     },
   ]);
 });
+
+describe('onUnsubscribe', () => {
+  test('is fired when a subscription is removed', async () => {
+    const subscriber = new ChannelSubscriber();
+    const listener = vi.fn();
+    subscriber.onUnsubscribe(listener);
+    await subscriber.subscribeToChannel('channel1', {}, 1);
+    await subscriber.unsubscribeFromChannel('channel1', 1);
+    expect(listener).toHaveBeenCalledExactlyOnceWith('channel1');
+  });
+
+  test('is fired when the subscribers of a channel are reset', async () => {
+    const subscriber = new ChannelSubscriber();
+    const listener = vi.fn();
+    subscriber.onUnsubscribe(listener);
+    await subscriber.subscribeToChannel('channel1', {}, 1);
+    await subscriber.resetChannelSubscribers('channel1');
+    expect(listener).toHaveBeenCalledExactlyOnceWith('channel1');
+    expect(subscriber.hasSubscribers('channel1')).toBeFalsy();
+  });
+
+  test('is not fired when resetting a channel without subscribers', async () => {
+    const subscriber = new ChannelSubscriber();
+    const listener = vi.fn();
+    subscriber.onUnsubscribe(listener);
+    await subscriber.resetChannelSubscribers('channel1');
+    expect(listener).not.toHaveBeenCalled();
+  });
+});
