@@ -19,10 +19,13 @@ The catalog sources are watched through the generic custom resources support of 
 
 ## Installation
 
-Install the extension in Podman Desktop using the following OCI image:
+Install the extension in Podman Desktop using one of the following OCI images:
 
 | Channel | Image | Description |
 |---------|-------|-------------|
+| Release | `ghcr.io/feloy/podman-desktop-extension-kubernetes-olm:latest` | Latest stable release |
+| Release (pinned) | `ghcr.io/feloy/podman-desktop-extension-kubernetes-olm:<version>` | Specific release version |
+| Development | `ghcr.io/feloy/podman-desktop-extension-kubernetes-olm:next` | Latest build from `main` branch |
 | Pull Request | `ghcr.io/feloy/podman-desktop-extension-kubernetes-olm/pr:<commit-sha>` | Build from a specific PR |
 
 ## Development
