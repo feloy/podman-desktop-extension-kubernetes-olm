@@ -175,6 +175,38 @@ test.each([
   expect(screen.getByRole('tooltip')).toHaveTextContent(tip);
 });
 
+test('searches the name, display name and publisher, but not the namespace', async () => {
+  catalogSourcesMock.setData({
+    catalogSources: [
+      {
+        name: 'operatorhubio-catalog',
+        namespace: 'olm',
+        displayName: 'Community Operators',
+        publisher: 'OperatorHub.io',
+      },
+      { name: 'kuadrant-operator-catalog', namespace: 'olm', displayName: 'Kuadrant Operators', publisher: 'Kuadrant' },
+    ],
+  });
+  render(CatalogSourcesList);
+  await vi.waitFor(() => expect(screen.getByText('Community Operators')).toBeInTheDocument());
+  const search = screen.getByRole('textbox');
+
+  // the resource name, not displayed
+  await fireEvent.input(search, { target: { value: 'operatorhubio' } });
+  await vi.waitFor(() => expect(screen.queryByText('Kuadrant Operators')).not.toBeInTheDocument());
+  expect(screen.getByText('Community Operators')).toBeInTheDocument();
+
+  // the publisher
+  await fireEvent.input(search, { target: { value: 'kuadrant' } });
+  await vi.waitFor(() => expect(screen.queryByText('Community Operators')).not.toBeInTheDocument());
+  expect(screen.getByText('Kuadrant Operators')).toBeInTheDocument();
+
+  // the namespace, shared by all the catalog sources
+  await fireEvent.input(search, { target: { value: 'olm' } });
+  await vi.waitFor(() => expect(screen.queryByText('Kuadrant Operators')).not.toBeInTheDocument());
+  expect(screen.queryByText('Community Operators')).not.toBeInTheDocument();
+});
+
 test('displays an empty message when there is no catalog source', async () => {
   catalogSourcesMock.setData({ catalogSources: [] });
   render(CatalogSourcesList);
