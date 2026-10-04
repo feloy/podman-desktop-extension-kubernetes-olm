@@ -17,13 +17,18 @@
  ***********************************************************************/
 
 import type { SubscribeApi } from '/@/interface/subscribe-api';
+import type { SystemApi } from '/@/interface/system-api';
 import { createRpcChannel } from '@kubernetes-olm/rpc';
 import type { CatalogSourcesData } from '/@/model/catalog-source-info';
 import type { PackageManifestsData } from '/@/model/package-manifest-info';
+import type { PackageManifestDetailsData } from '/@/model/package-manifest-details';
 
 // RPC channels (used by the webview to send requests to the extension)
 export const API_SUBSCRIBE = createRpcChannel<SubscribeApi>('SubscribeApi');
+export const API_SYSTEM = createRpcChannel<SystemApi>('SystemApi');
 
 // Broadcast events (sent by extension and received by the webview)
 export const CATALOG_SOURCES = createRpcChannel<CatalogSourcesData>('CatalogSources');
 export const PACKAGE_MANIFESTS = createRpcChannel<PackageManifestsData>('PackageManifests');
+// subscribed with a PackageManifestKey as options
+export const PACKAGE_MANIFEST_DETAILS = createRpcChannel<PackageManifestDetailsData>('PackageManifestDetails');

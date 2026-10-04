@@ -20,6 +20,7 @@ import { ContainerModule } from 'inversify';
 import { DispatcherObject } from '/@/dispatcher/util/dispatcher-object';
 import { CatalogSourcesDispatcher } from '/@/dispatcher/catalog-sources-dispatcher';
 import { PackageManifestsDispatcher } from '/@/dispatcher/package-manifests-dispatcher';
+import { PackageManifestDetailsDispatcher } from '/@/dispatcher/package-manifest-details-dispatcher';
 
 const dispatchersModule = new ContainerModule(options => {
   options.bind<CatalogSourcesDispatcher>(CatalogSourcesDispatcher).toSelf().inSingletonScope();
@@ -27,6 +28,9 @@ const dispatchersModule = new ContainerModule(options => {
 
   options.bind<PackageManifestsDispatcher>(PackageManifestsDispatcher).toSelf().inSingletonScope();
   options.bind(DispatcherObject).toService(PackageManifestsDispatcher);
+
+  options.bind<PackageManifestDetailsDispatcher>(PackageManifestDetailsDispatcher).toSelf().inSingletonScope();
+  options.bind(DispatcherObject).toService(PackageManifestDetailsDispatcher);
 });
 
 export { dispatchersModule };

@@ -23,7 +23,7 @@ import {
   PACKAGE_MANIFESTS_RESOURCE,
 } from './dashboard-states-manager';
 import { ChannelSubscriber } from './channel-subscriber';
-import { PACKAGE_MANIFESTS } from '@kubernetes-olm/channels';
+import { PACKAGE_MANIFEST_DETAILS, PACKAGE_MANIFESTS } from '@kubernetes-olm/channels';
 import type {
   ConfigurationChangeEvent,
   Configuration,
@@ -36,6 +36,7 @@ import type {
   ContextsHealthsInfo,
   KubernetesDashboardExtensionApi,
   KubernetesDashboardSubscriber,
+  KubernetesObject,
   ResourceUpdateInfo,
 } from '@podman-desktop/kubernetes-dashboard-extension-api';
 import { InversifyBinding } from '/@/inject/inversify-binding';
@@ -262,7 +263,7 @@ describe('dashboard extension is installed', () => {
       fireContextsHealth(REACHABLE_CONTEXTS_HEALTH);
       const channelSubscriber = container.get(ChannelSubscriber);
       await channelSubscriber.subscribeToChannel(PACKAGE_MANIFESTS.name, undefined, 1);
-      manager.setPackageManifests({ packageManifests: [{ name: 'pkg', namespace: 'olm', channels: [] }] });
+      manager.setPackageManifestItems([{ metadata: { name: 'pkg', namespace: 'olm' } }]);
       resourceSubscriptionDispose.mockClear();
 
       await channelSubscriber.unsubscribeFromChannel(PACKAGE_MANIFESTS.name, 1);
@@ -279,6 +280,52 @@ describe('dashboard extension is installed', () => {
       await channelSubscriber.unsubscribeFromChannel(PACKAGE_MANIFESTS.name, 1);
       expect(packageManifestsSubscriptions()).toHaveLength(1);
       expect(resourceSubscriptionDispose).not.toHaveBeenCalled();
+    });
+
+    test('are subscribed to while the details of a package are displayed', async () => {
+      fireContextsHealth(REACHABLE_CONTEXTS_HEALTH);
+      const channelSubscriber = container.get(ChannelSubscriber);
+      const key = { catalogSourceNamespace: 'olm', catalogSource: 'catalog1', name: 'pkg' };
+      await channelSubscriber.subscribeToChannel(PACKAGE_MANIFEST_DETAILS.name, key, 1);
+      expect(packageManifestsSubscriptions()).toHaveLength(1);
+
+      // going from the list to the details keeps the subscription
+      await channelSubscriber.subscribeToChannel(PACKAGE_MANIFESTS.name, undefined, 2);
+      await channelSubscriber.unsubscribeFromChannel(PACKAGE_MANIFESTS.name, 2);
+      expect(resourceSubscriptionDispose).not.toHaveBeenCalled();
+
+      await channelSubscriber.unsubscribeFromChannel(PACKAGE_MANIFEST_DETAILS.name, 1);
+      expect(resourceSubscriptionDispose).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('package manifest details', () => {
+    function packageManifest(catalogSource: string, version: string): KubernetesObject {
+      return {
+        metadata: { name: 'pkg', namespace: 'olm' },
+        status: {
+          catalogSource,
+          catalogSourceNamespace: 'olm',
+          defaultChannel: 'stable',
+          channels: [{ name: 'stable', currentCSVDesc: { version } }],
+        },
+      };
+    }
+
+    test('are found by catalog and name, among packages with the same name', () => {
+      manager.setPackageManifestItems([packageManifest('catalog1', '1.0.0'), packageManifest('catalog2', '2.0.0')]);
+      const details = manager.getPackageManifestDetails([
+        { catalogSourceNamespace: 'olm', catalogSource: 'catalog2', name: 'pkg' },
+      ]);
+      expect(details).toHaveLength(1);
+      expect(details[0]).toEqual(expect.objectContaining({ catalogSource: 'catalog2', version: '2.0.0' }));
+    });
+
+    test('are not returned for an unknown package', () => {
+      manager.setPackageManifestItems([packageManifest('catalog1', '1.0.0')]);
+      expect(
+        manager.getPackageManifestDetails([{ catalogSourceNamespace: 'olm', catalogSource: 'other', name: 'pkg' }]),
+      ).toEqual([]);
     });
   });
 });

@@ -20,13 +20,19 @@ import { configuration, Disposable, extensions, kubernetes } from '@podman-deskt
 import type {
   ContextsHealthsInfo,
   KubernetesDashboardSubscriber,
+  KubernetesObject,
 } from '@podman-desktop/kubernetes-dashboard-extension-api';
 import { inject, injectable } from 'inversify';
 import { Emitter, Event } from '/@/types/emitter';
 import { DashboardApiManager } from '/@/manager/dashboard-api-manager';
-import type { CatalogSourcesData, PackageManifestsData } from '@kubernetes-olm/channels';
-import { PACKAGE_MANIFESTS } from '@kubernetes-olm/channels';
-import { toCatalogSourceInfo, toPackageManifestInfo } from '/@/manager/resource-transformers';
+import type {
+  CatalogSourcesData,
+  PackageManifestDetails,
+  PackageManifestKey,
+  PackageManifestsData,
+} from '@kubernetes-olm/channels';
+import { isSamePackageManifest, PACKAGE_MANIFEST_DETAILS, PACKAGE_MANIFESTS } from '@kubernetes-olm/channels';
+import { toCatalogSourceInfo, toPackageManifestDetails, toPackageManifestInfo } from '/@/manager/resource-transformers';
 import { ChannelSubscriber } from '/@/manager/channel-subscriber';
 
 /** The name under which the Dashboard extension watches CatalogSources, as `<plural>.<group>`. */
@@ -62,8 +68,10 @@ export class DashboardStatesManager implements Disposable {
 
   #catalogSources: CatalogSourcesData = { catalogSources: [] };
   #packageManifests: PackageManifestsData = { packageManifests: [] };
+  // the PackageManifests as received from the Dashboard, to build the details of a package on demand
+  #packageManifestItems: readonly KubernetesObject[] = [];
 
-  // the package manifests are subscribed to only while the webview subscribes to them
+  // the package manifests are subscribed to only while the webview subscribes to them or to the details of one
   #packageManifestsWanted = false;
   #packageManifestsSubscription: Disposable | undefined;
 
@@ -91,8 +99,11 @@ export class DashboardStatesManager implements Disposable {
     this.#subscriptions.push(kubernetes.onDidUpdateKubeconfig(() => this.#invalidateResources()));
 
     const updatePackageManifestsWanted = (channelName: string): void => {
-      if (channelName === PACKAGE_MANIFESTS.name) {
-        this.#setPackageManifestsWanted(this.channelSubscriber.hasSubscribers(channelName));
+      if (channelName === PACKAGE_MANIFESTS.name || channelName === PACKAGE_MANIFEST_DETAILS.name) {
+        this.#setPackageManifestsWanted(
+          this.channelSubscriber.hasSubscribers(PACKAGE_MANIFESTS.name) ||
+            this.channelSubscriber.hasSubscribers(PACKAGE_MANIFEST_DETAILS.name),
+        );
       }
     };
     this.#subscriptions.push(this.channelSubscriber.onSubscribe(updatePackageManifestsWanted));
@@ -161,7 +172,7 @@ export class DashboardStatesManager implements Disposable {
     // newly selected one. The health event emitted after a context switch recreates the
     // subscriptions once the dashboard has selected the new current context.
     this.setCatalogSources({ catalogSources: [] });
-    this.setPackageManifests({ packageManifests: [] });
+    this.setPackageManifestItems([]);
 
     // A kubeconfig edit which leaves the current context unchanged does not necessarily emit a
     // health event. Recreate in that case too, after the dashboard has processed the change.
@@ -204,7 +215,7 @@ export class DashboardStatesManager implements Disposable {
     this.#packageManifestsWanted = wanted;
     if (!wanted) {
       this.#unsubscribeFromPackageManifests();
-      this.setPackageManifests({ packageManifests: [] });
+      this.setPackageManifestItems([]);
     } else if (this.#resourcesSubscribed) {
       this.#subscribeToPackageManifests();
     }
@@ -218,13 +229,11 @@ export class DashboardStatesManager implements Disposable {
     this.#packageManifestsSubscription = this.#subscriber.onResourceUpdate(
       { resourceName: PACKAGE_MANIFESTS_RESOURCE, namespace },
       event => {
-        this.setPackageManifests({
-          packageManifests: event.resources.flatMap(r =>
-            r.resourceName === PACKAGE_MANIFESTS_RESOURCE && r.namespace === namespace
-              ? r.items.map(item => toPackageManifestInfo(item))
-              : [],
+        this.setPackageManifestItems(
+          event.resources.flatMap(r =>
+            r.resourceName === PACKAGE_MANIFESTS_RESOURCE && r.namespace === namespace ? r.items : [],
           ),
-        });
+        );
       },
     );
   }
@@ -265,8 +274,24 @@ export class DashboardStatesManager implements Disposable {
     return this.#packageManifests;
   }
 
-  setPackageManifests(packageManifests: PackageManifestsData): void {
-    this.#packageManifests = packageManifests;
+  setPackageManifestItems(items: readonly KubernetesObject[]): void {
+    this.#packageManifestItems = items;
+    this.#packageManifests = { packageManifests: items.map(item => toPackageManifestInfo(item)) };
     this.#onPackageManifestsChange.fire();
+  }
+
+  // returns the details of the requested packages, for the ones found
+  getPackageManifestDetails(keys: PackageManifestKey[]): PackageManifestDetails[] {
+    return keys.flatMap(key => {
+      const item = this.#packageManifestItems.find(item => {
+        const status = (item['status'] ?? {}) as Record<string, unknown>;
+        return isSamePackageManifest(key, {
+          catalogSourceNamespace: String(status['catalogSourceNamespace'] ?? ''),
+          catalogSource: String(status['catalogSource'] ?? ''),
+          name: item.metadata?.['name'] as string,
+        });
+      });
+      return item ? [toPackageManifestDetails(item)] : [];
+    });
   }
 }
