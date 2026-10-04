@@ -1,0 +1,27 @@
+diff --git a/src/kubernetes-dashboard-extension-api.d.ts b/src/kubernetes-dashboard-extension-api.d.ts
+index c4e2fe24cde02c2a08d2633a56953be6831dd04e..f901d32762dbd95f35f3cc3e74d4bdc5be4431f7 100644
+--- a/src/kubernetes-dashboard-extension-api.d.ts
++++ b/src/kubernetes-dashboard-extension-api.d.ts
+@@ -80,6 +80,11 @@ export interface ResourceUpdateOptions {
+    * The context name to subscribe to. If not set, defaults to the current context.
+    */
+   contextName?: string;
++  /**
++   * The namespace to watch, for a namespaced resource. Ignored for a cluster-scoped resource.
++   * When not set, the subscription follows the namespace of the context; when set, it is pinned to this namespace.
++   */
++  namespace?: string;
+ }
+ 
+ /**
+@@ -100,6 +105,10 @@ export interface KubernetesObject {
+ export interface ContextResourceItems {
+   contextName?: string;
+   resourceName: string;
++  /**
++   * The namespace pinned by the subscription, undefined when the subscription follows the namespace of the context.
++   */
++  namespace?: string;
+   items: readonly KubernetesObject[];
+ }
+ 
