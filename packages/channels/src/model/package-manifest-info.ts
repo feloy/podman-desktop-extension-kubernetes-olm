@@ -27,6 +27,8 @@ export interface PackageManifestInfo {
   name: string;
   /** The display name of the operator, e.g. `MongoDB Controllers for Kubernetes`. */
   displayName?: string;
+  /** A one-line description of the operator. */
+  shortDescription?: string;
   provider?: string;
   catalogSource?: string;
   catalogSourceNamespace?: string;

@@ -16,6 +16,17 @@
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
 
-export * from './catalog-source-info';
-export * from './package-manifest-info';
-export * from './package-manifest-details';
+import { expect, test } from 'vitest';
+import { packageManifestDetailsUrl } from './package-manifest-url';
+
+test('builds the URL of the details of a package, with the description tab by default', () => {
+  expect(
+    packageManifestDetailsUrl({ catalogSourceNamespace: 'olm', catalogSource: 'operatorhubio-catalog', name: 'etcd' }),
+  ).toEqual('/packagemanifests/olm/operatorhubio-catalog/etcd/description');
+});
+
+test('encodes the parts of the URL', () => {
+  expect(
+    packageManifestDetailsUrl({ catalogSourceNamespace: 'ns', catalogSource: 'a/b', name: 'c d' }, 'apis'),
+  ).toEqual('/packagemanifests/ns/a%2Fb/c%20d/apis');
+});

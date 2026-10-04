@@ -25,7 +25,7 @@ import type { RpcExtension } from '@kubernetes-olm/rpc';
 import type { ExtensionContext, TelemetryLogger } from '@podman-desktop/api';
 import type { Container } from 'inversify';
 import { InversifyBinding } from '/@/inject/inversify-binding.js';
-import { CATALOG_SOURCES, PACKAGE_MANIFESTS } from '@kubernetes-olm/channels';
+import { CATALOG_SOURCES, PACKAGE_MANIFEST_DETAILS, PACKAGE_MANIFESTS } from '@kubernetes-olm/channels';
 import { Dispatcher } from '/@/manager/dispatcher.js';
 import { ChannelSubscriber } from '/@/manager/channel-subscriber.js';
 import { DispatcherObject } from '/@/dispatcher/util/dispatcher-object.js';
@@ -91,6 +91,7 @@ test('Dispatcher should dispatch package manifests when onPackageManifestsChange
   await vi.waitFor(() => {
     expect(dispatcherSpy).toHaveBeenCalledWith(PACKAGE_MANIFESTS);
   });
+  expect(dispatcherSpy).toHaveBeenCalledWith(PACKAGE_MANIFEST_DETAILS);
 });
 
 test('dispatchByChannelName is called when onSubscribe emits an event', async () => {

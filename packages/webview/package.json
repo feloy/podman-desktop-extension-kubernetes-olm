@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "inversify": "^8.2.3",
+    "micromark": "^4.0.3",
     "svelte-preprocess": "^6.0.5"
   },
   "devDependencies": {

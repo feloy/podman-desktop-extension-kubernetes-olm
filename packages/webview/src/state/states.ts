@@ -19,6 +19,7 @@
 import { inject, injectable } from 'inversify';
 import { StateCatalogSourcesData } from '/@/state/catalog-sources.svelte';
 import { StatePackageManifestsData } from '/@/state/package-manifests.svelte';
+import { StatePackageManifestDetailsData } from '/@/state/package-manifest-details.svelte';
 
 @injectable()
 export class States {
@@ -34,5 +35,12 @@ export class States {
 
   get statePackageManifestsData(): StatePackageManifestsData {
     return this._statePackageManifestsData;
+  }
+
+  @inject(StatePackageManifestDetailsData)
+  private _statePackageManifestDetailsData: StatePackageManifestDetailsData;
+
+  get statePackageManifestDetailsData(): StatePackageManifestDetailsData {
+    return this._statePackageManifestDetailsData;
   }
 }

@@ -16,6 +16,28 @@
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
 
-export * from './catalog-source-info';
-export * from './package-manifest-info';
-export * from './package-manifest-details';
+import { inject, injectable } from 'inversify';
+
+import {
+  PACKAGE_MANIFEST_DETAILS,
+  type PackageManifestDetailsData,
+  type PackageManifestKey,
+} from '@kubernetes-olm/channels';
+import { RpcBrowser } from '@kubernetes-olm/rpc';
+
+import { AbsStateObjectImpl, type StateObject } from './util/state-object.svelte';
+
+// subscribed with the key of the package to get the details of
+@injectable()
+export class StatePackageManifestDetailsData
+  extends AbsStateObjectImpl<PackageManifestDetailsData, PackageManifestKey>
+  implements StateObject<PackageManifestDetailsData, PackageManifestKey>
+{
+  constructor(@inject(RpcBrowser) rpcBrowser: RpcBrowser) {
+    super(rpcBrowser);
+  }
+
+  async init(): Promise<void> {
+    await this.initChannel(PACKAGE_MANIFEST_DETAILS);
+  }
+}

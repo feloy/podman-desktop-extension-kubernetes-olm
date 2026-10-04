@@ -22,6 +22,7 @@ import { fireEvent, render, screen } from '@testing-library/svelte';
 import { beforeEach, expect, test, vi } from 'vitest';
 import type { PackageManifestInfo, PackageManifestsData } from '@kubernetes-olm/channels';
 import PackageManifestsList from './PackageManifestsList.svelte';
+import { router } from 'tinro';
 import { StatesMocks } from '/@/tests/state-mocks';
 import { FakeStateObject } from '/@/state/util/fake-state-object.svelte';
 
@@ -32,6 +33,7 @@ const MONGODB: PackageManifestInfo = {
   name: 'mongodb-kubernetes',
   namespace: 'olm',
   displayName: 'MongoDB Controllers for Kubernetes',
+  shortDescription: 'Deploy MongoDB on Kubernetes',
   provider: 'MongoDB, Inc',
   catalogSource: 'operatorhubio-catalog',
   catalogSourceNamespace: 'olm',
@@ -124,6 +126,28 @@ test('filters the package manifests with the search term', async () => {
   await vi.waitFor(() => expect(screen.getByText('etcd')).toBeInTheDocument());
 
   await fireEvent.input(screen.getByRole('textbox'), { target: { value: 'mongodb, inc' } });
+
+  await vi.waitFor(() => expect(screen.queryByText('etcd')).not.toBeInTheDocument());
+  expect(screen.getByText('MongoDB Controllers for Kubernetes')).toBeInTheDocument();
+});
+
+test('the name opens the details of the package of its catalog', async () => {
+  const gotoSpy = vi.spyOn(router, 'goto').mockImplementation(() => {});
+  packageManifestsMock.setData({ packageManifests: [MONGODB] });
+  render(PackageManifestsList);
+  await vi.waitFor(() => expect(screen.getByText('MongoDB Controllers for Kubernetes')).toBeInTheDocument());
+  await fireEvent.click(screen.getByRole('button', { name: 'MongoDB Controllers for Kubernetes' }));
+  expect(gotoSpy).toHaveBeenCalledWith('/packagemanifests/olm/operatorhubio-catalog/mongodb-kubernetes/description');
+});
+
+test('displays the short description of the packages, and searches it', async () => {
+  packageManifestsMock.setData({
+    packageManifests: [MONGODB, { name: 'etcd', namespace: 'olm', displayName: 'etcd', channels: [] }],
+  });
+  render(PackageManifestsList);
+  await vi.waitFor(() => expect(screen.getByText('Deploy MongoDB on Kubernetes')).toBeInTheDocument());
+
+  await fireEvent.input(screen.getByRole('textbox'), { target: { value: 'deploy mongodb' } });
 
   await vi.waitFor(() => expect(screen.queryByText('etcd')).not.toBeInTheDocument());
   expect(screen.getByText('MongoDB Controllers for Kubernetes')).toBeInTheDocument();

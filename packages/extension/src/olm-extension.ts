@@ -24,10 +24,11 @@ import { RpcExtension } from '@kubernetes-olm/rpc';
 import { readFile } from 'node:fs/promises';
 import { InversifyBinding } from '/@/inject/inversify-binding';
 import type { Container } from 'inversify';
-import { API_SUBSCRIBE, IDisposable } from '@kubernetes-olm/channels';
+import { API_SUBSCRIBE, API_SYSTEM, IDisposable } from '@kubernetes-olm/channels';
 import { ChannelSubscriber } from '/@/manager/channel-subscriber';
 import { Dispatcher } from '/@/manager/dispatcher';
 import { DashboardStatesManager } from '/@/manager/dashboard-states-manager';
+import { SystemApiImpl } from '/@/manager/system-api';
 
 export class OlmExtension {
   #container: Container | undefined;
@@ -64,6 +65,7 @@ export class OlmExtension {
     this.#dispatcher.init();
 
     rpcExtension.registerInstance(API_SUBSCRIBE, this.#channelSubscriber);
+    rpcExtension.registerInstance(API_SYSTEM, await this.#container.getAsync(SystemApiImpl));
 
     const disposables = await this.#container.getAllAsync<IDisposable>(IDisposable);
 

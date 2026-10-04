@@ -16,6 +16,18 @@
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
 
-export * from './catalog-source-info';
-export * from './package-manifest-info';
-export * from './package-manifest-details';
+import { env, Uri } from '@podman-desktop/api';
+import type { SystemApi } from '@kubernetes-olm/channels';
+import { injectable } from 'inversify';
+
+@injectable()
+export class SystemApiImpl implements SystemApi {
+  // the URLs come from the catalogs: only web pages are opened
+  async openExternal(url: string): Promise<boolean> {
+    if (!/^https?:\/\//i.exec(url)) {
+      console.warn(`not opening ${url}: only http and https URLs are opened`);
+      return false;
+    }
+    return env.openExternal(Uri.parse(url));
+  }
+}

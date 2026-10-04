@@ -22,12 +22,14 @@ import { ChannelSubscriber } from '/@/manager/channel-subscriber';
 import { Dispatcher } from '/@/manager/dispatcher';
 import { DashboardStatesManager } from '/@/manager/dashboard-states-manager';
 import { DashboardApiManager } from '/@/manager/dashboard-api-manager';
+import { SystemApiImpl } from '/@/manager/system-api';
 
 const managersModule = new ContainerModule(options => {
   options.bind<ChannelSubscriber>(ChannelSubscriber).toSelf().inSingletonScope();
   options.bind<Dispatcher>(Dispatcher).toSelf().inSingletonScope();
   options.bind<DashboardStatesManager>(DashboardStatesManager).toSelf().inSingletonScope();
   options.bind<DashboardApiManager>(DashboardApiManager).toSelf().inSingletonScope();
+  options.bind<SystemApiImpl>(SystemApiImpl).toSelf().inSingletonScope();
 });
 
 export { managersModule };

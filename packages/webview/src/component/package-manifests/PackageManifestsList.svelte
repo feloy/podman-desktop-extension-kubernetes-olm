@@ -44,6 +44,7 @@ const packageManifests: PackageManifestUI[] = $derived(
       name: packageManifest.name,
       namespace: packageManifest.namespace,
       displayName: packageManifest.displayName ?? '',
+      shortDescription: packageManifest.shortDescription ?? '',
       provider: packageManifest.provider ?? '',
       catalogName: packageManifest.catalogSource ?? '',
       catalogNamespace: packageManifest.catalogSourceNamespace ?? '',
@@ -58,6 +59,7 @@ const packageManifests: PackageManifestUI[] = $derived(
       return [
         packageManifest.name,
         packageManifest.displayName,
+        packageManifest.shortDescription,
         packageManifest.provider,
         displayedCatalogName(packageManifest),
       ].some(value => value.toLowerCase().includes(term));

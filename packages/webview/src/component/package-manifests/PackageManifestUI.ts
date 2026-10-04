@@ -20,6 +20,7 @@ export interface PackageManifestUI {
   name: string;
   namespace: string;
   displayName: string;
+  shortDescription: string;
   provider: string;
   catalogName: string;
   catalogNamespace: string;

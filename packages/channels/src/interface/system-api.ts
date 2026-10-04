@@ -16,6 +16,12 @@
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
 
-export * from './catalog-source-info';
-export * from './package-manifest-info';
-export * from './package-manifest-details';
+export const SystemApi = Symbol.for('SystemApi');
+
+export interface SystemApi {
+  /**
+   * Opens a web page in the external browser. Only `http` and `https` URLs are opened.
+   * Returns false when the URL is not opened.
+   */
+  openExternal(url: string): Promise<boolean>;
+}

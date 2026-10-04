@@ -16,6 +16,16 @@
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
 
-export * from './catalog-source-info';
-export * from './package-manifest-info';
-export * from './package-manifest-details';
+import type { PackageManifestKey } from '@kubernetes-olm/channels';
+
+export const PACKAGE_MANIFESTS_URL = '/packagemanifests';
+
+export type PackageManifestTab = 'description' | 'apis' | 'versions' | 'summary';
+
+// the URL of the details of a package: the catalog is part of it, as several catalogs can provide a package
+// the details open on the first tab, the description
+export function packageManifestDetailsUrl(key: PackageManifestKey, tab: PackageManifestTab = 'description'): string {
+  return [PACKAGE_MANIFESTS_URL, key.catalogSourceNamespace, key.catalogSource, key.name, tab]
+    .map((part, index) => (index === 0 ? part : encodeURIComponent(part)))
+    .join('/');
+}

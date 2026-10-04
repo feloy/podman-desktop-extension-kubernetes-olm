@@ -7,6 +7,7 @@ import Navigation from '/@/Navigation.svelte';
 import type { RouterState } from '/@/models/router-state';
 import CatalogSourcesList from '/@/component/catalog-sources/CatalogSourcesList.svelte';
 import PackageManifestsList from '/@/component/package-manifests/PackageManifestsList.svelte';
+import PackageManifestDetails from '/@/component/package-manifests/PackageManifestDetails.svelte';
 
 const DEFAULT_URL = '/catalogsources';
 
@@ -42,6 +43,13 @@ onMount(() => {
 
         <Route path="/packagemanifests">
           <PackageManifestsList />
+        </Route>
+
+        <Route path="/packagemanifests/:catalogSourceNamespace/:catalogSource/:name/*" let:meta>
+          <PackageManifestDetails
+            catalogSourceNamespace={decodeURIComponent(meta.params.catalogSourceNamespace)}
+            catalogSource={decodeURIComponent(meta.params.catalogSource)}
+            name={decodeURIComponent(meta.params.name)} />
         </Route>
       </div>
     </div>
