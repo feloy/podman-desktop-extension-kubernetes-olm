@@ -2,7 +2,7 @@
   "name": "kubernetes-olm",
   "displayName": "Kubernetes OLM",
   "description": "Podman Desktop extension allowing to manage Operator Lifecycle Manager (OLM) resources",
-  "version": "0.1.0-next",
+  "version": "0.1.0",
   "icon": "icon.png",
   "publisher": "podman-desktop",
   "license": "Apache-2.0",
