@@ -17,7 +17,7 @@
  ***********************************************************************/
 
 import { describe, expect, test } from 'vitest';
-import { toCatalogSourceInfo } from './resource-transformers';
+import { toCatalogSourceInfo, toPackageManifestInfo } from './resource-transformers';
 import type { KubernetesObject } from '@podman-desktop/kubernetes-dashboard-extension-api';
 
 describe('toCatalogSourceInfo', () => {
@@ -83,6 +83,77 @@ describe('toCatalogSourceInfo', () => {
       connectionState: undefined,
       pollInterval: undefined,
       latestPoll: undefined,
+    });
+  });
+});
+
+describe('toPackageManifestInfo', () => {
+  test('transforms a package manifest, with the version of the default channel', () => {
+    const item: KubernetesObject = {
+      apiVersion: 'packages.operators.coreos.com/v1',
+      kind: 'PackageManifest',
+      metadata: { name: 'mongodb-kubernetes', namespace: 'olm', labels: { catalog: 'operatorhubio-catalog' } },
+      status: {
+        catalogSource: 'operatorhubio-catalog',
+        catalogSourceDisplayName: 'Community Operators',
+        catalogSourceNamespace: 'olm',
+        catalogSourcePublisher: 'OperatorHub.io',
+        defaultChannel: 'stable',
+        packageName: 'mongodb-kubernetes',
+        provider: { name: 'MongoDB, Inc' },
+        channels: [
+          {
+            name: 'fast',
+            currentCSV: 'mongodb-kubernetes.v1.14.0',
+            currentCSVDesc: { displayName: 'MongoDB (fast)', version: '1.14.0' },
+          },
+          {
+            name: 'stable',
+            currentCSV: 'mongodb-kubernetes.v1.13.0',
+            currentCSVDesc: { displayName: 'MongoDB Controllers for Kubernetes', version: '1.13.0' },
+          },
+        ],
+      },
+    };
+    expect(toPackageManifestInfo(item)).toEqual({
+      namespace: 'olm',
+      name: 'mongodb-kubernetes',
+      displayName: 'MongoDB Controllers for Kubernetes',
+      provider: 'MongoDB, Inc',
+      catalogSource: 'operatorhubio-catalog',
+      catalogSourceNamespace: 'olm',
+      catalogSourceDisplayName: 'Community Operators',
+      defaultChannel: 'stable',
+      version: '1.13.0',
+      channels: ['fast', 'stable'],
+    });
+  });
+
+  test('uses the first channel when the default channel is not found, and the provider of the version', () => {
+    const item: KubernetesObject = {
+      metadata: { name: 'pkg', namespace: 'olm' },
+      status: {
+        defaultChannel: 'missing',
+        channels: [{ name: 'alpha', currentCSVDesc: { version: '0.1.0', provider: { name: 'Someone' } } }],
+      },
+    };
+    expect(toPackageManifestInfo(item)).toEqual(
+      expect.objectContaining({ version: '0.1.0', provider: 'Someone', channels: ['alpha'] }),
+    );
+  });
+
+  test('transforms a package manifest without status', () => {
+    expect(toPackageManifestInfo({ metadata: { name: 'pkg', namespace: 'olm' } })).toEqual({
+      namespace: 'olm',
+      name: 'pkg',
+      displayName: undefined,
+      provider: undefined,
+      catalogSource: undefined,
+      catalogSourceNamespace: undefined,
+      catalogSourceDisplayName: undefined,
+      defaultChannel: undefined,
+      version: undefined,
+      channels: [],
     });
   });
 });

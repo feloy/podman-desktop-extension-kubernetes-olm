@@ -39,7 +39,7 @@ function isUnderSection(sectionUrls: string[]): boolean {
   return sectionUrls.some(u => url === u || url.startsWith(u + '/'));
 }
 
-const catalogsUrls = ['/catalogsources'];
+const catalogsUrls = ['/catalogsources', '/packagemanifests'];
 
 let catalogsExpanded = $state(loadExpanded()['catalogs'] ?? true);
 
@@ -68,6 +68,7 @@ $effect(() => {
     <NavItem title="Catalogs" icon={faBook} section={true} bind:expanded={catalogsExpanded} href="" />
     {#if catalogsExpanded}
       <NavItem title="Catalog Sources" child={true} href="/catalogsources" />
+      <NavItem title="Package Manifests" child={true} href="/packagemanifests" />
     {/if}
   </div>
 </nav>

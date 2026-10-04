@@ -20,7 +20,7 @@ import { RpcChannel } from '@kubernetes-olm/rpc';
 import { inject, injectable, multiInject } from 'inversify';
 import { DispatcherObject } from '/@/dispatcher/util/dispatcher-object';
 import { ChannelSubscriber } from '/@/manager/channel-subscriber';
-import { CATALOG_SOURCES } from '@kubernetes-olm/channels';
+import { CATALOG_SOURCES, PACKAGE_MANIFESTS } from '@kubernetes-olm/channels';
 import { DashboardStatesManager } from '/@/manager/dashboard-states-manager';
 
 @injectable()
@@ -44,6 +44,9 @@ export class Dispatcher {
   init(): void {
     this.dashboardStatesManager.onCatalogSourcesChange(async () => {
       await this.dispatch(CATALOG_SOURCES);
+    });
+    this.dashboardStatesManager.onPackageManifestsChange(async () => {
+      await this.dispatch(PACKAGE_MANIFESTS);
     });
     this.#channelSubscriber.onSubscribe(async channelName => await this.dispatchByChannelName(channelName));
   }

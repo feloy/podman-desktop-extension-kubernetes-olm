@@ -17,7 +17,7 @@
  ***********************************************************************/
 
 import type { KubernetesObject } from '@podman-desktop/kubernetes-dashboard-extension-api';
-import type { CatalogSourceInfo } from '@kubernetes-olm/channels';
+import type { CatalogSourceInfo, PackageManifestInfo } from '@kubernetes-olm/channels';
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
@@ -46,5 +46,27 @@ export function toCatalogSourceInfo(item: KubernetesObject): CatalogSourceInfo {
     connectionState: asString(connectionState['lastObservedState']),
     pollInterval: asString(registryPoll['interval']),
     latestPoll: asString(status['latestImageRegistryPoll']),
+  };
+}
+
+export function toPackageManifestInfo(item: KubernetesObject): PackageManifestInfo {
+  const metadata = asRecord(item.metadata);
+  const status = asRecord(item['status']);
+  const channels = Array.isArray(status['channels']) ? status['channels'].map(asRecord) : [];
+  const defaultChannel = asString(status['defaultChannel']);
+  // the version information is taken from the current version of the default channel
+  const channel = channels.find(c => c['name'] === defaultChannel) ?? channels[0];
+  const currentVersion = asRecord(channel?.['currentCSVDesc']);
+  return {
+    namespace: asString(metadata['namespace']) ?? '',
+    name: asString(metadata['name']) ?? '',
+    displayName: asString(currentVersion['displayName']),
+    provider: asString(asRecord(status['provider'])['name']) ?? asString(asRecord(currentVersion['provider'])['name']),
+    catalogSource: asString(status['catalogSource']),
+    catalogSourceNamespace: asString(status['catalogSourceNamespace']),
+    catalogSourceDisplayName: asString(status['catalogSourceDisplayName']),
+    defaultChannel,
+    version: asString(currentVersion['version']),
+    channels: channels.map(c => asString(c['name'])).filter((name): name is string => !!name),
   };
 }

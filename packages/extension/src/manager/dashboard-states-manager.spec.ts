@@ -17,7 +17,13 @@
  ***********************************************************************/
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { CATALOG_SOURCES_RESOURCE, DashboardStatesManager } from './dashboard-states-manager';
+import {
+  CATALOG_SOURCES_RESOURCE,
+  DashboardStatesManager,
+  PACKAGE_MANIFESTS_RESOURCE,
+} from './dashboard-states-manager';
+import { ChannelSubscriber } from './channel-subscriber';
+import { PACKAGE_MANIFESTS } from '@kubernetes-olm/channels';
 import type {
   ConfigurationChangeEvent,
   Configuration,
@@ -205,5 +211,74 @@ describe('dashboard extension is installed', () => {
     fireContextsHealth(REACHABLE_CONTEXTS_HEALTH);
     fireConfigurationChange('kubernetes-olm.other');
     expect(resourceSubscriptionDispose).not.toHaveBeenCalled();
+  });
+
+  describe('package manifests', () => {
+    function packageManifestsSubscriptions(): [unknown, (event: ResourceUpdateInfo) => void][] {
+      return vi
+        .mocked(manager.getSubscriber()!.onResourceUpdate)
+        .mock.calls.filter(([options]) => options.resourceName === PACKAGE_MANIFESTS_RESOURCE);
+    }
+
+    test('are not subscribed to while not displayed', () => {
+      fireContextsHealth(REACHABLE_CONTEXTS_HEALTH);
+      expect(packageManifestsSubscriptions()).toHaveLength(0);
+    });
+
+    test('are subscribed to in the catalog namespace while displayed, and transformed', async () => {
+      fireContextsHealth(REACHABLE_CONTEXTS_HEALTH);
+      const channelSubscriber = container.get(ChannelSubscriber);
+      await channelSubscriber.subscribeToChannel(PACKAGE_MANIFESTS.name, undefined, 1);
+
+      expect(packageManifestsSubscriptions()).toHaveLength(1);
+      const [options, listener] = packageManifestsSubscriptions()[0]!;
+      expect(options).toEqual({ resourceName: PACKAGE_MANIFESTS_RESOURCE, namespace: 'olm' });
+
+      const onChange = vi.fn();
+      manager.onPackageManifestsChange(onChange);
+      listener({
+        resources: [
+          {
+            resourceName: PACKAGE_MANIFESTS_RESOURCE,
+            namespace: 'olm',
+            items: [{ metadata: { name: 'pkg', namespace: 'olm' }, status: { defaultChannel: 'stable' } }],
+          },
+        ],
+      });
+      expect(onChange).toHaveBeenCalled();
+      expect(manager.getPackageManifests().packageManifests).toEqual([
+        expect.objectContaining({ name: 'pkg', defaultChannel: 'stable' }),
+      ]);
+    });
+
+    test('displayed before a context is reachable are subscribed to when reachable', async () => {
+      await container.get(ChannelSubscriber).subscribeToChannel(PACKAGE_MANIFESTS.name, undefined, 1);
+      expect(packageManifestsSubscriptions()).toHaveLength(0);
+      fireContextsHealth(REACHABLE_CONTEXTS_HEALTH);
+      expect(packageManifestsSubscriptions()).toHaveLength(1);
+    });
+
+    test('are unsubscribed from and cleared when not displayed anymore', async () => {
+      fireContextsHealth(REACHABLE_CONTEXTS_HEALTH);
+      const channelSubscriber = container.get(ChannelSubscriber);
+      await channelSubscriber.subscribeToChannel(PACKAGE_MANIFESTS.name, undefined, 1);
+      manager.setPackageManifests({ packageManifests: [{ name: 'pkg', namespace: 'olm', channels: [] }] });
+      resourceSubscriptionDispose.mockClear();
+
+      await channelSubscriber.unsubscribeFromChannel(PACKAGE_MANIFESTS.name, 1);
+
+      expect(resourceSubscriptionDispose).toHaveBeenCalledOnce();
+      expect(manager.getPackageManifests().packageManifests).toEqual([]);
+    });
+
+    test('are subscribed to once for several displays', async () => {
+      fireContextsHealth(REACHABLE_CONTEXTS_HEALTH);
+      const channelSubscriber = container.get(ChannelSubscriber);
+      await channelSubscriber.subscribeToChannel(PACKAGE_MANIFESTS.name, undefined, 1);
+      await channelSubscriber.subscribeToChannel(PACKAGE_MANIFESTS.name, undefined, 2);
+      await channelSubscriber.unsubscribeFromChannel(PACKAGE_MANIFESTS.name, 1);
+      expect(packageManifestsSubscriptions()).toHaveLength(1);
+      expect(resourceSubscriptionDispose).not.toHaveBeenCalled();
+    });
   });
 });

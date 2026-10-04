@@ -17,3 +17,4 @@
  ***********************************************************************/
 
 export * from './catalog-source-info';
+export * from './package-manifest-info';

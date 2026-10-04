@@ -56,8 +56,9 @@ const catalogSources: CatalogSourceUI[] = $derived(
     .filter(catalogSource => {
       if (!searchTerm) return true;
       const term = searchTerm.toLowerCase();
-      return [catalogSource.name, catalogSource.namespace, catalogSource.displayName, catalogSource.publisher].some(
-        value => value.toLowerCase().includes(term),
+      // all the catalog sources are in the same namespace: it is not searched
+      return [catalogSource.name, catalogSource.displayName, catalogSource.publisher].some(value =>
+        value.toLowerCase().includes(term),
       );
     }),
 );

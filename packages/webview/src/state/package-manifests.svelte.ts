@@ -16,17 +16,23 @@
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
 
-import { ContainerModule } from 'inversify';
-import { DispatcherObject } from '/@/dispatcher/util/dispatcher-object';
-import { CatalogSourcesDispatcher } from '/@/dispatcher/catalog-sources-dispatcher';
-import { PackageManifestsDispatcher } from '/@/dispatcher/package-manifests-dispatcher';
+import { inject, injectable } from 'inversify';
 
-const dispatchersModule = new ContainerModule(options => {
-  options.bind<CatalogSourcesDispatcher>(CatalogSourcesDispatcher).toSelf().inSingletonScope();
-  options.bind(DispatcherObject).toService(CatalogSourcesDispatcher);
+import { PACKAGE_MANIFESTS, type PackageManifestsData } from '@kubernetes-olm/channels';
+import { RpcBrowser } from '@kubernetes-olm/rpc';
 
-  options.bind<PackageManifestsDispatcher>(PackageManifestsDispatcher).toSelf().inSingletonScope();
-  options.bind(DispatcherObject).toService(PackageManifestsDispatcher);
-});
+import { AbsStateObjectImpl, type StateObject } from './util/state-object.svelte';
 
-export { dispatchersModule };
+@injectable()
+export class StatePackageManifestsData
+  extends AbsStateObjectImpl<PackageManifestsData, void>
+  implements StateObject<PackageManifestsData, void>
+{
+  constructor(@inject(RpcBrowser) rpcBrowser: RpcBrowser) {
+    super(rpcBrowser);
+  }
+
+  async init(): Promise<void> {
+    await this.initChannel(PACKAGE_MANIFESTS);
+  }
+}
