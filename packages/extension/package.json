@@ -40,7 +40,7 @@
     "@kubernetes-olm/channels": "workspace:*",
     "@podman-desktop/api": "1.29.1",
     "@podman-desktop/kubernetes-dashboard-extension-api": "0.6.0",
-    "@types/node": "^24",
+    "@types/node": "^25",
     "@typescript-eslint/eslint-plugin": "^8.71.0",
     "@typescript-eslint/parser": "^8.71.0",
     "@vitest/coverage-v8": "^5.0.2",
