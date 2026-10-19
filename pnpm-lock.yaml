@@ -257,8 +257,8 @@ importers:
         specifier: workspace:*
         version: link:../rpc
       '@podman-desktop/ui-svelte':
-        specifier: 1.29.1
-        version: 1.29.1(svelte-fa@4.0.4(svelte@5.57.2(@typescript-eslint/types@8.71.2)))(svelte@5.57.2(@typescript-eslint/types@8.71.2))
+        specifier: 1.30.5
+        version: 1.30.5(svelte-fa@4.0.4(svelte@5.57.2(@typescript-eslint/types@8.71.2)))(svelte@5.57.2(@typescript-eslint/types@8.71.2))
       '@podman-desktop/webview-api':
         specifier: 1.29.1
         version: 1.29.1
@@ -629,8 +629,8 @@ packages:
   '@podman-desktop/kubernetes-dashboard-extension-api@0.6.0':
     resolution: {integrity: sha512-ePJfVN5Wa4cZ6RiKYYBH6pSBvzbfanMW5C0P7wTe3g1dE2YWdl9OGVfj5rqq8fQxIITaaBRc6Klgp9vrjsaZcQ==}
 
-  '@podman-desktop/ui-svelte@1.29.1':
-    resolution: {integrity: sha512-q7Uw1Jtw+mQuukFpV2F++Qh4FWviJCVLGgglSxeWSlhHXw58OTIOPTHiyLdxjP1flo3miUuYUAJwQ4LuIkQmKA==}
+  '@podman-desktop/ui-svelte@1.30.5':
+    resolution: {integrity: sha512-gJiXt7bQhEoNAwy6fi8dXZ9zr6WQVr6XGxlZrKl6LluL/nBcUCApjbbEZC+ws4icSoabSkrpCtN4p6VtvtTX9g==}
     peerDependencies:
       svelte: ^4.0.0 || ^5.0.0
       svelte-fa: ^4.0.0
@@ -3891,7 +3891,7 @@ snapshots:
 
   '@podman-desktop/kubernetes-dashboard-extension-api@0.6.0(patch_hash=ab6f51edbd2ad20be4ad6d8d3bbcb7cbed0917bb4b7e83400511265046f766b7)': {}
 
-  '@podman-desktop/ui-svelte@1.29.1(svelte-fa@4.0.4(svelte@5.57.2(@typescript-eslint/types@8.71.2)))(svelte@5.57.2(@typescript-eslint/types@8.71.2))':
+  '@podman-desktop/ui-svelte@1.30.5(svelte-fa@4.0.4(svelte@5.57.2(@typescript-eslint/types@8.71.2)))(svelte@5.57.2(@typescript-eslint/types@8.71.2))':
     dependencies:
       '@floating-ui/dom': 1.8.0
       '@fortawesome/fontawesome-free': 7.3.1
