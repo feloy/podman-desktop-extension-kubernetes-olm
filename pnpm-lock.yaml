@@ -105,8 +105,8 @@ importers:
         specifier: ^3.23.1
         version: 3.23.1(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2))(svelte@5.57.2(@typescript-eslint/types@8.71.2))
       eslint-plugin-unicorn:
-        specifier: ^77.0.0
-        version: 77.0.0(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2))
+        specifier: ^78.0.0
+        version: 78.0.0(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@5.9.3)
       node-gyp:
         specifier: ^13.1.0
         version: 13.1.0
@@ -453,6 +453,10 @@ packages:
 
   '@eslint/css-tree@4.1.1':
     resolution: {integrity: sha512-A+s89eP+yDAPkKjnIOfjlkGifg5J7GPn01nWx14UjBVWktfkxOU4975F9ZZ13xNxkGiblNcBaAqgKhnQrW6SWA==}
+    engines: {node: ^20.19.0 || ^22.13.0 || >=24}
+
+  '@eslint/css-tree@4.1.2':
+    resolution: {integrity: sha512-rVcxLmwSkEL3aWS3vAgsTRrQHoYE1b0XcgDtKHDJ92XOkyUpcbS/g0tUJKhvCtlEhYzgKBWsgDd+Z/aPhd166w==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
 
   '@eslint/eslintrc@3.3.7':
@@ -1824,11 +1828,15 @@ packages:
       svelte:
         optional: true
 
-  eslint-plugin-unicorn@77.0.0:
-    resolution: {integrity: sha512-aayznMCKTXlPAsoyUjRok862sz3BJAfxpQX/t79AT/uVQTmWsCx3FXfXo+9hfhL8aR2mMZQYyXoDZo3/ly6lJw==}
+  eslint-plugin-unicorn@78.0.0:
+    resolution: {integrity: sha512-XTDqxcJeAmh2lhgU75TpuMDdFtPDnAU+DCW56nR5UzXTG+uOyvOGjV80O11my7kNb2bYSCPlWa8c4K8/rwlYog==}
     engines: {node: '>=22'}
     peerDependencies:
       eslint: '>=10.4'
+      typescript: '*'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   eslint-scope@5.1.1:
     resolution: {integrity: sha512-2NxwbF/hZ0KpepYN0cNbo+FN6XoK7GaHlQhgx/hIZl6Va0bF45RQOOwhLIy8lQDbuCiadSLCBnH2CFYquit5bw==}
@@ -2520,6 +2528,9 @@ packages:
 
   mdn-data@2.35.0:
     resolution: {integrity: sha512-k+1+dEIm2z/BEfdvYzT/fIyAGeDBo/1AJNJI4ilFXJRYoxP/3Ds+GP8shAOIq8jYXY9N5nGB3Ag104NsagmLAA==}
+
+  mdn-data@2.37.2:
+    resolution: {integrity: sha512-rz9YOBGItdSbe7HcSArUbhiAv4SB/4DKRYg96CSFS2CcIYMbUvBtZlzA1NCbk2AdgbmYwMqwNblLpR441lLeiQ==}
 
   merge2@1.4.1:
     resolution: {integrity: sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==}
@@ -3703,6 +3714,11 @@ snapshots:
   '@eslint/css-tree@4.1.1':
     dependencies:
       mdn-data: 2.35.0
+      source-map-js: 1.2.2
+
+  '@eslint/css-tree@4.1.2':
+    dependencies:
+      mdn-data: 2.37.2
       source-map-js: 1.2.2
 
   '@eslint/eslintrc@3.3.7(supports-color@10.2.2)':
@@ -5108,10 +5124,10 @@ snapshots:
     transitivePeerDependencies:
       - ts-node
 
-  eslint-plugin-unicorn@77.0.0(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2)):
+  eslint-plugin-unicorn@78.0.0(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@5.9.3):
     dependencies:
       '@eslint-community/eslint-utils': 4.10.1(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2))
-      '@eslint/css-tree': 4.1.1
+      '@eslint/css-tree': 4.1.2
       browserslist: 4.29.3
       change-case: 5.4.4
       ci-info: 4.4.0
@@ -5124,6 +5140,8 @@ snapshots:
       identifier-regex: 1.1.0
       indent-string: 5.0.0
       is-builtin-module: 5.0.0
+      micromark: 4.0.3(supports-color@10.2.2)
+      parse5: 8.0.1
       pluralize: 8.0.0
       quote-js-string: 0.1.0
       regjsparser: 0.13.4
@@ -5131,6 +5149,10 @@ snapshots:
       semver: 7.8.5
       strip-indent: 4.1.1
       yaml: 2.9.1
+    optionalDependencies:
+      typescript: 5.9.3
+    transitivePeerDependencies:
+      - supports-color
 
   eslint-scope@5.1.1:
     dependencies:
@@ -5786,6 +5808,8 @@ snapshots:
   mdn-data@2.27.1: {}
 
   mdn-data@2.35.0: {}
+
+  mdn-data@2.37.2: {}
 
   merge2@1.4.1: {}
 
