@@ -42,7 +42,7 @@
     "@typescript-eslint/parser": "^8.72.1",
     "jsdom": "^31.0.0",
     "prettier": "^3.9.10",
-    "prettier-plugin-svelte": "^4.1.1",
+    "prettier-plugin-svelte": "^4.2.0",
     "reflect-metadata": "^0.2.2",
     "svelte": "^5",
     "svelte-fa": "^4.0.3",
